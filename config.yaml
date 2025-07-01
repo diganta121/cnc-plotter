@@ -87,9 +87,9 @@ probe:
 
 # WiFi configuration (highly recommended for easy control)
 wifi:
-  ssid: "Your_WiFi_SSID"        # <--- CHANGE THIS to your Wi-Fi network name
-  password: "Your_WiFi_Password" # <--- CHANGE THIS to your Wi-Fi password
-  hostname: "plotter_fluidnc"   # How your device will appear on the network
+  ssid: "**********"        # <--- CHANGE THIS to your Wi-Fi network name
+  password: "**********" # <--- CHANGE THIS to your Wi-Fi password
+  hostname: "cnc_plotter"   # How your device will appear on the network
   mode: STA                   # Station mode (connects to your home Wi-Fi)
 
 # Buttons for Pause and E-Stop
