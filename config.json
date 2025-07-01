@@ -1,0 +1,108 @@
+name: "CNC_Plotter_ESP32"
+board: "ESP32 Dev Module" # Or specifically the board ID from FluidNC Wiki if known (e.g., fluidnc_esp32_c3_dev)
+
+# Stepping engine configuration
+stepping:
+  engine: RMT          # Recommended for ESP32 for reliable stepping
+  idle_ms: 255         # Time in ms after last step pulse before disabling motor drivers
+  dir_delay_us: 1      # Delay between dir pin change and step pulse in microseconds
+  pulse_us: 2          # Step pulse width in microseconds
+  disable_delay_us: 0  # Delay before motors are disabled (0 for immediate)
+
+# Define shared stepper driver enable pin
+# This pin goes to the 'EN' or 'ENABLE' pin on your DRV8825 expansion board
+# Make sure it's wired correctly. 'low' means the driver is enabled when this pin is LOW.
+axes:
+  shared_stepper_disable_pin: gpio.13:low # GPIO 13, active low for enable
+
+  # X-axis configuration (moving the entire Y-axis gantry)
+  x:
+    steps_per_mm: 320.0        # Calculated: 200 steps/rev * 32 microsteps / (1mm pitch * 20 teeth)
+    max_rate_mm_per_min: 6000  # Max speed, adjust based on your mechanical build (start conservative)
+    acceleration_mm_per_sec2: 100 # How quickly it speeds up/slows down (start conservative)
+    max_travel_mm: 300         # Maximum physical travel of your X-axis (adjust this to your machine's physical limit!)
+    homing:
+      cycle: 1                 # Homing cycle (e.g., X then Y)
+      mpos_mm: 0               # Machine position after homing (usually 0 for min, or max_travel_mm for max)
+      feed_mm_per_min: 500     # Speed to approach limit switch
+      seek_mm_per_min: 1000    # Speed to quickly find limit switch
+      dwell_ms: 100            # Pause after hitting switch
+      pullback_mm: 5           # Distance to pull back from switch
+    motor0:
+      direction_pin: gpio.16:low # Adjust pin (GPIO 16) and :low/:high if motor moves wrong way
+      step_pin: gpio.17          # Adjust pin (GPIO 17)
+
+  # Y-axis configuration (moving the pen carriage along the X-gantry)
+  y:
+    steps_per_mm: 106.667      # Calculated: 200 steps/rev * 32 microsteps / (1mm pitch * 60 teeth)
+    max_rate_mm_per_min: 6000  # Max speed, adjust based on your mechanical build
+    acceleration_mm_per_sec2: 100 # How quickly it speeds up/slows down
+    max_travel_mm: 300         # Maximum physical travel of your Y-axis (adjust this to your machine's physical limit!)
+    homing:
+      cycle: 1                 # Same homing cycle, FluidNC processes axes concurrently by default if cycle is same
+      mpos_mm: 0
+      feed_mm_per_min: 500
+      seek_mm_per_min: 1000
+      dwell_ms: 100
+      pullback_mm: 5
+    motor0:
+      direction_pin: gpio.18:low # Adjust pin (GPIO 18) and :low/:high if motor moves wrong way
+      step_pin: gpio.19          # Adjust pin (GPIO 19)
+
+# Limit switches (assuming normally open (NO) switches that connect to GND when pressed)
+# And the internal pullup of the ESP32 is used.
+# If your switches are Normally Closed (NC), change :high:pu to :low:pd
+limits:
+  # X-axis limits
+  x_min_pin: gpio.34:high:pu # GPIO 34, active high (when pressed), with internal pull-up
+  x_max_pin: gpio.36:high:pu # GPIO 36, active high (when pressed), with internal pull-up
+
+  # Y-axis limits
+  y_min_pin: gpio.35:high:pu # GPIO 35, active high (when pressed), with internal pull-up
+  y_max_pin: gpio.39:high:pu # GPIO 39, active high (when pressed), with internal pull-up
+
+  # Z-axis (servo) limit - This acts as a probe for the servo's downward travel
+  # Use a momentary switch mounted where the pen touches the surface.
+  z_min_pin: gpio.32:high:pu # GPIO 32, active high (when pressed), with internal pull-up
+  z_probe_dwell_ms: 50       # Time to debounce or settle after probe hit
+
+# Servo (Z-axis) configuration for pen lift
+servo:
+  pin: gpio.2            # GPIO 2 for the servo signal pin
+  rate_hz: 50            # Standard PWM frequency for hobby servos
+  max_pulse_us: 2000     # Max pulse width for servo (adjust based on your servo)
+  min_pulse_us: 1000     # Min pulse width for servo (adjust based on your servo)
+  startup_delay_ms: 500  # Delay before servo moves at startup
+  # Define G-code commands to control the servo position
+  commands:
+    - command: M3 S0     # Pen Up command
+      value: 1500        # Adjust this pulse width for your 'pen up' position
+    - command: M3 S1     # Pen Down command (will use the Z_MIN_PIN to stop if hit)
+      value: 1000        # This is the target value, but the Z_MIN_PIN will override if hit first.
+
+# Optional: Z-axis probe (using the servo's limit switch)
+# This allows G38.2/G38.3 commands to probe for the surface.
+probe:
+  pin: gpio.32:high:pu # Same pin as z_min_pin, configured as a probe.
+
+# WiFi configuration (highly recommended for easy control)
+wifi:
+  ssid: "Your_WiFi_SSID"        # <--- CHANGE THIS to your Wi-Fi network name
+  password: "Your_WiFi_Password" # <--- CHANGE THIS to your Wi-Fi password
+  hostname: "plotter_fluidnc"   # How your device will appear on the network
+  mode: STA                   # Station mode (connects to your home Wi-Fi)
+
+# Buttons for Pause and E-Stop
+control:
+  feed_hold_pin: gpio.25:high:pu # GPIO 25 for Feed Hold (Pause) button, active high, with internal pull-up
+  estop_pin: gpio.26:high:pu     # GPIO 26 for E-Stop button, active high, with internal pull-up
+
+# Default G-code commands executed on startup (optional but useful)
+startup_lines:
+  - G21 # Set units to millimeters
+  - G90 # Set absolute positioning mode
+  - G92 X0 Y0 Z0 # Set current position to 0,
+0,
+0 (if no homing is done)
+  # If you are using limit switches, you will likely want to home:
+  # - $H # Home the machine at startup
