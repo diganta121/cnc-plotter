@@ -1,0 +1,54 @@
+name: cnc plotter v2
+board: ESP32 Dev Controller V4
+stepping:
+  engine: RMT
+  idle_ms: 250
+  dir_delay_us: 1
+  pulse_us: 2
+  disable_delay_us: 0
+axes:
+  shared_stepper_disable_pin: gpio.13:low
+  x:
+    steps_per_mm: 13.333
+    max_rate_mm_per_min: 5000
+    acceleration_mm_per_sec2: 100
+    max_travel_mm: 300
+    homing:
+      cycle: 2
+      mpos_mm: 300
+      feed_mm_per_min: 500
+      seek_mm_per_min: 1000
+      positive_direction: true
+    motor0:
+      standard_stepper:
+        step_pin: gpio.12
+        direction_pin: gpio.14
+        disable_pin: NO_PIN
+  y:
+    steps_per_mm: 40
+    max_rate_mm_per_min: 5000
+    acceleration_mm_per_sec2: 100
+    max_travel_mm: 300
+    homing:
+      cycle: 2
+      mpos_mm: 0
+      feed_mm_per_min: 500
+      seek_mm_per_min: 1000
+      positive_direction: false
+    motor0:
+      standard_stepper:
+        step_pin: gpio.26
+        direction_pin: gpio.15
+control:
+  feed_hold_pin: gpio.25:high:pu
+  estop_pin: gpio.16:pu:low
+  safety_door_pin: NO_PIN
+  reset_pin: NO_PIN
+  cycle_start_pin: NO_PIN
+  fault_pin: NO_PIN
+  macro0_pin: gpio.33:high:pu
+macros:
+  macro0:
+limits:
+  x_max_pin: gpio.36:high:pu
+  y_min_pin: gpio.35:high:pu

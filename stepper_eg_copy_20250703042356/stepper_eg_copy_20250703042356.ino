@@ -3,12 +3,12 @@
 // They correspond to the pins used in your FluidNC config.yaml for consistency.
 
 // X-axis Stepper Pins
-#define X_STEP_PIN 17 // Connects to STEP pin on X-axis DRV8825
-#define X_DIR_PIN 16  // Connects to DIR pin on X-axis DRV8825
+#define X_STEP_PIN 12
+#define X_DIR_PIN 14
 
 // Y-axis Stepper Pins
-#define Y_STEP_PIN 19 // Connects to STEP pin on Y-axis DRV8825
-#define Y_DIR_PIN 18  // Connects to DIR pin on Y-axis DRV8825
+#define Y_STEP_PIN 26
+#define Y_DIR_PIN 15
 
 // Shared Stepper Enable Pin (connects to EN/ENABLE pin on your DRV8825 board)
 // This pin typically needs to be LOW to enable the stepper drivers.
@@ -20,12 +20,12 @@
 // as it can cause motors to skip steps or stall.
 // Recommended starting point: 500 (microsecond delay per step)
 // For faster movement, try 200, 100, or even lower, but test carefully.
-#define STEP_DELAY_US 5000 // Delay in microseconds between step pulses
+#define STEP_DELAY_US 300 // Delay in microseconds between step pulses
 
 // --- Setup Function ---
 void setup() {
   Serial.begin(115200); // Initialize serial communication at FluidNC's baud rate
-  delay(100); // Short delay to allow serial to initialize
+  delay(500); // Short delay to allow serial to initialize
 
   Serial.println("\n--- Arduino Simple Stepper Test for ESP32 ---");
   Serial.println("Commands format: AXIS STEPS DIRECTION (e.g., X 1000 +)");
@@ -105,7 +105,6 @@ void loop() {
 
     int numSteps = stepsStr.toInt(); // Convert steps string to integer
 
-    // Validate parsed values
     if (numSteps <= 0) {
       Serial.println("Error: Number of steps must be a positive integer.");
       return;
@@ -115,7 +114,6 @@ void loop() {
       return;
     }
 
-    // Call doSteps based on axis
     if (axisChar == 'X' || axisChar == 'x') {
       doSteps(X_STEP_PIN, X_DIR_PIN, numSteps, directionChar);
     } else if (axisChar == 'Y' || axisChar == 'y') {
